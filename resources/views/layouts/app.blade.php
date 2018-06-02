@@ -20,7 +20,7 @@
         <nav class="navbar navbar-expand-md navbar-light navbar-laravel">
             <div class="container">
                 <a class="navbar-brand" href="{{ url('/') }}">
-                    {{ config('app.name', 'Laravel') }}
+                    لوحة التحكم
                 </a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -33,7 +33,7 @@
                     </ul>
 
                     <!-- Right Side Of Navbar -->
-                    <ul class="navbar-nav ml-auto">
+                    <ul class="navbar-nav mr-auto">
                         <!-- Authentication Links -->
                         @guest
                             <li><a class="nav-link" href="{{ route('login') }}">{{ __('Login') }}</a></li>
@@ -69,47 +69,73 @@
                         <div class="col-4">
                             <ul class="list-group">
                                 <li class="list-group-item">
-                                    <a href="{{ route('home') }}">Home</a>
+                                    <a href="{{ route('dashboard') }}">
+                                        <i class="fa fa-home"></i>
+                                        <span>الرئيسية</span>
+                                    </a>
                                 </li>
                                 <li class="list-group-item">
-                                    <a href="{{ route('user.profile') }}">My Profile</a>
+                                    <a href="{{ route('user.profile') }}">
+                                        <i class="fa fa-user"></i>
+                                        <span>حسابي</span>
+                                    </a>
+                                </li>
+                                @role('مؤلف|مدير')
+                                <li class="list-group-item">
+                                    <a href="{{ route('post.index') }}">
+                                        <i class="fa fa-file"></i>
+                                        <span>المنشورات</span>
+                                    </a>
+                                </li>
+                                @endrole
+                                @role('مدير')
+                                <li class="list-group-item">
+                                    <a href="{{ route('category.index') }}">
+                                        <i class="fa fa-th-large"></i>
+                                        <span>الفئات</span>
+                                    </a>
+                                </li>
+
+
+                                <li class="list-group-item">
+                                    <a href="{{ route('type.index') }}">
+                                        <i class="fa fa-tags"></i>
+                                        <span>انماط المنشورات</span>
+                                    </a>
                                 </li>
                                 <li class="list-group-item">
-                                    <a href="{{ route('category.index') }}">Categories</a>
+                                    <a href="{{ route('tag.index') }}">
+                                        <i class="fa fa-tags"></i>
+                                        <span>الوسوم</span>
+                                    </a>
                                 </li>
                                 <li class="list-group-item">
-                                    <a href="{{ route('category.create') }}">Create new category</a>
+                                    <a href="{{ route('user.index') }}">
+                                        <i class="fa fa-users"></i>
+                                        <span>المستخدمين</span>
+                                    </a>
                                 </li>
                                 <li class="list-group-item">
-                                    <a href="{{ route('post.index') }}">Posts</a>
+                                    <a href="{{ route('role.index') }}">
+                                        <i class="fa fa-users"></i>
+                                        <span>الأدوار والصلاحيات</span>
+                                    </a>
                                 </li>
+
                                 <li class="list-group-item">
-                                    <a href="{{ route('post.trashed') }}">Trashed Posts</a>
+                                    <a href="{{ route('post.trashed') }}">
+                                        <i class="fa fa-trash-o"></i>
+                                        <span>المهملات</span>
+                                    </a>
                                 </li>
-                                <li class="list-group-item">
-                                    <a href="{{ route('post.create') }}">Create new post</a>
-                                </li>
-                                <li class="list-group-item">
-                                    <a href="{{ route('tag.create') }}">Create new tag</a>
-                                </li>
-                                <li class="list-group-item">
-                                    <a href="{{ route('tag.index') }}">Tags</a>
-                                </li>
-                                <li class="list-group-item">
-                                    <a href="{{ route('user.create') }}">New User</a>
-                                </li>
-                                <li class="list-group-item">
-                                    <a href="{{ route('user.index') }}">Users</a>
-                                </li>
+                                @endrole
                             </ul>
                         </div>
                         <div class="col-8">
                             @yield('content')
                         </div>
                     @else
-                        <div class="col-8 offset-2">
-                            @yield('content')
-                        </div>
+                        @yield('content')
                     @endif
 
                 </div>

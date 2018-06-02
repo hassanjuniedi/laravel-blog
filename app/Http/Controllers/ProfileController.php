@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Profile;
+use App\User;
 use Auth;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Session;
+use Spatie\Permission\Models\Role;
 
 class ProfileController extends Controller
 {
@@ -60,7 +62,11 @@ class ProfileController extends Controller
      */
     public function edit($id)
     {
-        //
+        $user = User::findOrFail($id);
+        return view('admin.user.profile',[
+            'user'=> $user,
+            'roles' => Role::all()
+        ]);
     }
 
     /**
@@ -108,6 +114,21 @@ class ProfileController extends Controller
 
 
 
+    }
+
+    /**
+     * @param Request $request
+     * @param $id
+     */
+    public function updateRoles(Request $request, $id) {
+        $this->validate($request, [
+           'role' => 'required'
+        ]);
+
+        $user = User::findOrFail($id);
+        $user->syncRoles($request->role);
+        $user->save();
+        return redirect()->back();
     }
 
     /**

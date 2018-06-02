@@ -1,6 +1,11 @@
 {
     "/js/app.js": "/js/app.js",
     "/css/app.css": "/css/app.css",
+    "/css/blog.css": "/css/blog.css",
+    "/js/blog.js": "/js/blog.js",
     "/js/vendor.js": "/js/vendor.js",
+    "/js/summer-note.js": "/js/summer-note.js",
+    "/css/summer-note.css": "/css/summer-note.css",
+    "/css/navbar-black.css": "/css/navbar-black.css",
     "/css/vendor.css": "/css/vendor.css"
 }

@@ -2,7 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\PostType;
 use App\Tag;
+use Auth;
+use Carbon\Carbon;
+use DB;
+use Illuminate\Http\UploadedFile;
 use Session;
 use App\Category;
 use App\Post;
@@ -17,7 +22,13 @@ class PostController extends Controller
      */
     public function index()
     {
-        return view('admin.post.index')->with(['posts' => Post::all() ]);
+        $user = Auth::user();
+        $credentials = [];
+        if (!$user->hasRole('مدير')) {
+            $credentials['user_id'] = Auth::id();
+        }
+        $posts = Post::where($credentials)->get();
+        return view('admin.post.index')->with(['posts' => $posts ]);
     }
 
     /**
@@ -28,6 +39,7 @@ class PostController extends Controller
     public function create()
     {
         return view('admin.post.create')->with([
+            'types' => PostType::all(),
             'categories' => Category::all() ,
             'tags' => Tag::all()
         ]);
@@ -45,20 +57,35 @@ class PostController extends Controller
           'title' => 'required',
           'featured' => 'required|image',
           'content' => 'required',
+           'document' => 'required',
+           'summary' => 'required',
            'category_id' => 'required',
-           'tags' => 'required'
+           'type_id' => 'required',
+           'tags' => 'required',
+           'published_at' => 'required'
        ]);
+        /**
+         * @var $document UploadedFile
+         */
+        $document = $request->document;
+       $documentName = time().'-'.$document->getClientOriginalName();
+       $document->move('uploads/posts/attachments', $documentName);
 
-       $features_new_image = time().$request->featured->getClientOriginalName();
+       $features_new_image = time().'-'.$request->featured->getClientOriginalName();
 
        $request->featured->move('uploads/posts', $features_new_image);
 
        $post = Post::create([
            'title' => $request->title,
            'content' => $request->content,
+           'summary' => $request->summary,
            'featured' => 'uploads/posts/'.$features_new_image,
+           'download_url' => 'uploads/posts/attachments/'. $documentName,
+           'published_at' => $request->published_at,
            'slug' => str_slug($request->title),
-           'category_id' => $request->category_id
+           'category_id' => $request->category_id,
+           'user_id' => Auth::id(),
+           'type_id' => $request->type_id
        ]);
        $post->tags()->attach($request->tags);
 
@@ -75,7 +102,9 @@ class PostController extends Controller
      */
     public function show($id)
     {
-        return redirect()->back();
+        $post = Post::findOrFail($id);
+
+        return view('public.post.show')->with('post', $post);
     }
 
     /**
@@ -90,6 +119,7 @@ class PostController extends Controller
         $categories = Category::all();
         return view('admin.post.edit')->with([
             'post' => $post,
+            'types' => PostType::all(),
             'categories' => $categories,
             'tags' => Tag::all()
         ]);
@@ -107,7 +137,11 @@ class PostController extends Controller
         $this->validate($request, [
             'title' => 'required',
             'content' => 'required',
-            'category_id' => 'required'
+            'summary' => 'required',
+            'category_id' => 'required',
+            'type_id' => 'required',
+            'tags' => 'required',
+            'published_at' => 'required'
         ]);
 
         $post = Post::findOrFail($id);
@@ -120,11 +154,14 @@ class PostController extends Controller
 
         $post->title = $request->title;
         $post->content = $request->content;
+        $post->summary =  $request->summary;
         $post->category_id = $request->category_id;
+        $post->type_id = $request->type_id;
+        $post->tags()->sync($request->tags);
+        $post->published_at = $request->published_at;
         $post->save();
 
-        $post->tags()->sync($request->tags);
-        Session::flash('success', 'Post created successfully');
+        Session::flash('success', 'تم تحديث المنشور بنجاح');
 
         return redirect()->route('post.index');
     }
@@ -132,15 +169,22 @@ class PostController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param  int $id
      * @return \Illuminate\Http\Response
+     * @throws \Exception
      */
     public function destroy($id)
     {
         $post = Post::findOrFail($id);
 
+        try {
+            $post->delete();
+        } catch (\Exception $e) {
+            Session::flash('error', 'Post delete failed');
+            return redirect()->route('post.index');
+        }
 
-        Session::flash('success', 'Post deleted successfully');
+        Session::flash('success', 'تم نقل المنشور الى سلة المهملات');
 
         return redirect()->route('post.index');
     }
@@ -166,8 +210,50 @@ class PostController extends Controller
 
         $post->restore();
 
-        Session::flash('success', 'Post restored successfully');
+        Session::flash('success', 'تم استعادة المنشور بنجاح');
 
         return redirect()->back();
+    }
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function browse(Request $request) {
+        $query = [
+            'category' => $request->query->get('category'),
+            'year' => $request->query->get('year'),
+            'type' => $request->query->get('type'),
+            'tags' => $request->query->get('tag'),
+        ];
+        $criteria = [];
+        !isset($query['category']) ?: $criteria['category_id'] = $query['category'];
+        !isset($query['type']) ?: $criteria['type_id'] = $query['type'];
+//        !isset($query['year']) ?: $criteria[DB::raw('YEAR(published_at)')->getValue()] = $query['year'];
+        $posts = Post::where($criteria)
+            ->when(isset($query['year']), function($q) use ($query) {
+                    return $q->whereYear('published_at', $query['year']);
+            })
+            ->when(isset($query['tags']), function($q) use ($query) {
+                return $q->whereIn('id', $query['tags']);
+            })
+            ->get();
+
+        $years = Post::all()->pluck('published_at')->map(function ($item) {
+            if (null === $item) {
+                return null;
+            }
+            return Carbon::parse($item)->year;
+        })->unique();
+
+        return view('public.post.browse')->with(
+            [
+                'posts' => $posts,
+                'categories' => Category::all(),
+                'tags' => Tag::all(),
+                'types' => PostType::all(),
+                'years' => $years,
+                'query' => $query
+            ]);
     }
 }

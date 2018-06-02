@@ -1,6 +1,12 @@
 @extends('layouts.app')
 
 @section('content')
+    <div class="mb-4">
+        <a href="{{route('category.create')}}" class="btn btn-primary">
+            <i class="fa fa-plus"></i>
+            <span>إضافة فئة</span>
+        </a>
+    </div>
 <table class="table table-hover">
     <thead>
         <tr>

@@ -3,9 +3,9 @@
 
 use App\Profile;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [
+    'uses' => 'PublicController@home'
+]);
 
 Route::get('/test', function() {
     return Profile::find(3);
@@ -13,10 +13,23 @@ Route::get('/test', function() {
 
 Auth::routes();
 
-Route::get('/home', 'HomeController@index')->name('home');
+Route::get('/dashboard', 'HomeController@index')->name('dashboard');
 
+Route::group([], function () {
+    Route::get('/post/{id}',[
+        'uses' => 'PostController@show',
+        'as' => 'public.post.show'
+    ]);
+    Route::get('/posts', [
+        'uses' => 'PostController@browse',
+        'as' => 'public.post.browse'
+    ]);
+});
 Route::group(['prefix'=> 'admin', 'middleware'=> 'auth'], function (){
 
+    /**
+     * Posts
+     */
     Route::get('/posts',[
         'uses' => 'PostController@index',
         'as' => 'post.index'
@@ -62,6 +75,17 @@ Route::group(['prefix'=> 'admin', 'middleware'=> 'auth'], function (){
         'as' => 'post.store'
     ]);
 
+    Route::get('/post/{id}',[
+        'uses' => 'PostController@show',
+        'as' => 'post.show'
+    ]);
+
+
+
+
+    /**
+     * Categories
+     */
     Route::get('/categories',[
         'uses' => 'CategoryController@index',
         'as' => 'category.index'
@@ -88,6 +112,9 @@ Route::group(['prefix'=> 'admin', 'middleware'=> 'auth'], function (){
         'as' => 'category.delete'
     ]);
 
+    /**
+     * Tags
+     */
     Route::get('/tags',[
         'uses' => 'TagController@index',
         'as' => 'tag.index'
@@ -114,6 +141,38 @@ Route::group(['prefix'=> 'admin', 'middleware'=> 'auth'], function (){
         'as' => 'tag.delete'
     ]);
 
+    /**
+     * Post type
+     */
+    Route::get('/types',[
+        'uses' => 'PostTypeController@index',
+        'as' => 'type.index'
+    ]);
+
+    Route::get('/type/create',[
+        'uses' => 'PostTypeController@create',
+        'as' => 'type.create'
+    ]);
+    Route::post('/type/store',[
+        'uses' => 'PostTypeController@store',
+        'as' => 'type.store'
+    ]);
+    Route::get('/type/edit/{id}',[
+        'uses' => 'PostTypeController@edit',
+        'as' => 'type.edit'
+    ]);
+    Route::post('/type/update/{id}',[
+        'uses' => 'PostTypeController@update',
+        'as' => 'type.update'
+    ]);
+    Route::get('/type/delete/{id}',[
+        'uses' => 'PostTypeController@destroy',
+        'as' => 'type.delete'
+    ]);
+
+    /**
+     * Users
+     */
     Route::get('/users', [
         'uses' => 'UserController@index',
         'as' => 'user.index'
@@ -142,5 +201,27 @@ Route::group(['prefix'=> 'admin', 'middleware'=> 'auth'], function (){
         'as' => 'user.profile.update'
     ]);
 
+    Route::get('/users/edit/{id}', [
+        'uses' => 'ProfileController@edit',
+        'as' => 'user.edit'
+    ]);
 
+    Route::put('/users/roles/update/{id}', [
+        'uses' => 'ProfileController@updateRoles',
+        'as' => 'user.roles.update'
+    ]);
+
+    Route::get('/users/delete/{id}', [
+        'uses' => 'ProfileController@destroy',
+        'as' => 'user.delete'
+    ]);
+
+    /**
+     * Roles
+     */
+    Route::resource('role', 'RoleController');
+    /**
+     * Permissions
+     */
+    Route::resource('permission', 'PermissionController');
 });

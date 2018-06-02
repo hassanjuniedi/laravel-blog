@@ -17,9 +17,9 @@ class Admin
      */
     public function handle($request, Closure $next)
     {
-        if (!Auth::user()->admin) {
+        if (!Auth::user()->hasRole('مدير')) {
             Session::flash('error', 'You don\'t have the permissions to perform this action');
-            return redirect()->back();
+            return redirect()->route('dashboard');
         }
         return $next($request);
     }

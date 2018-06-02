@@ -64,4 +64,42 @@
             </form>
         </div>
     </div>
+    <br>
+    @if(isset($roles) )
+    <div class="card">
+        <div class="card-header">
+            إدارة أدوار المستخدم
+        </div>
+        <div class="card-body">
+            <form action="{{ @route('user.roles.update', ['id' => $user->id]) }}" method="post">
+                @csrf
+                <input type="hidden" name="_method" value="put">
+                <div class="form-group">
+                    <label for="roles">الصلاحيات</label>
+                    <select name="role[]" id="roles" class="form-control" multiple="multiple">
+                        @foreach($roles as $role)
+                            <option value="{{$role->id}}" @if(in_array($role->name, $user->getRoleNames()->all()) ) selected="selected" @endif>
+                                {{$role->name}}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <button class="btn btn-default">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    @endif
 @endsection
+@section('scripts')
+    <script>
+        $(document).ready(function () {
+
+            $('#roles').select2();
+
+        })
+    </script>
+@endsection
+
